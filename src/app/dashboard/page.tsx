@@ -152,7 +152,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>Dashboard</h1>
+      <h1>Welcome to our site</h1>
 
       <h2>Balance: ${balance}</h2>
 
