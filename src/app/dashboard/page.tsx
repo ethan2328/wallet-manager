@@ -1,5 +1,6 @@
 "use client";
 
+import { validateAmount } from "@/lib/validators";
 import { set } from "mongoose";
 import { useEffect, useState } from "react";
 
@@ -113,10 +114,17 @@ export default function DashboardPage() {
   const handleTransfer = async () => {
     const value = Number(transferAmount);
 
-    if (!transferEmail || !transferAmount || isNaN(value) || value <= 0) {
-      setError("Invalid input");
-      return;
-    }
+  const errorMsg = validateAmount(value);
+
+  if (!transferEmail) {
+    setError("Email is required");
+    return;
+  }
+
+  if (errorMsg) {
+    setError(errorMsg);
+    return;
+  }
 
     try {
       const res = await fetch("/api/wallet/transfer", {

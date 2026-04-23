@@ -2,41 +2,30 @@ import { connectDB } from "@/lib/mongodb";
 import { getCurrentUser } from "@/lib/getUser";
 import { Wallet } from "@/models/Wallet";
 import { Transaction } from "@/models/Transaction";
+import { validateAmount } from "@/lib/validators";
+import {success, fail} from "@/lib/response";
 
 export async function POST(req: Request) {
     await connectDB();
-    
+
   try {
     const user = await getCurrentUser();
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ message: "Unauthorized" }),
-        { status: 401 }
-      );
+      return fail("Unauthorized", 401);
     }
 
-        const { amount } = await req.json();
+  const { amount } = await req.json();
 
-    if (
-    typeof amount !== "number" ||
-    isNaN(amount) ||
-    amount <= 0 ||
-    amount > 1000000
-    ) {
-    return new Response(
-        JSON.stringify({ message: "Invalid amount" }),
-        { status: 400 }
-    );
-    }
+  const validationError = validateAmount(amount);
+  if (validationError) {
+    return fail(validationError, 400);
+  }
 
     const wallet = await Wallet.findOne({ userId: user._id });
 
     if (!wallet) {
-        return new Response(
-            JSON.stringify({ message: "Wallet not found" }),
-            { status: 404 }
-        );
+        return fail("Wallet not found", 404);
     }
 
     wallet.balance += amount;
@@ -48,16 +37,8 @@ export async function POST(req: Request) {
       amount,
     });
 
-    return new Response(
-      JSON.stringify({ balance: wallet.balance }),
-      { status: 200 }
-    );
+    return success({ balance: wallet.balance }, 200);
   } catch (error: any) {
-        console.error("ERROR:", error);
-
-        return new Response(
-            JSON.stringify({ message: error.message || "Server error" }),
-            { status: 500 }
-        );
-        }
+    return fail(error.message || "Server error", 500);
+  }
 }
